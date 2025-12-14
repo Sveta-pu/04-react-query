@@ -6,7 +6,7 @@ const api = axios.create({
   baseURL: 'https://api.themoviedb.org/3',
 });
 
-// 🔹 Чистий HTTP-сервіс
+// 🔹  HTTP-сервіс
 export async function fetchMovies(
   query: string,
   page: number
