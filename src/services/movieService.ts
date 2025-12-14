@@ -29,7 +29,7 @@ export async function fetchMovies(
   return response.data;
 }
 
-// 🔹 Кастомний хук для React-компонентів
+// 🔹 хук React-компонентів
 export function useMovies(query: string, page: number) {
   return useQuery({
     queryKey: ['movies', query, page],
