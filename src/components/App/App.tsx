@@ -1,35 +1,94 @@
-import { useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
-import './App.css';
+//* 🔹 Imports
+import { useState, useEffect } from 'react';
+import css from './App.module.css';
+import SearchBar from '../SearchBar/SearchBar';
+import MovieGrid from '../MovieGrid/MovieGrid';
+import { useMovies } from '../../services/movieService';
+import type { Movie } from '../../../types/movie';
+import Loader from '../Loader/Loader';
+import ErrorMessage from '../ErrorMessage/ErrorMessage';
+import MovieModal from '../MovieModal/MovieModal';
+import toast, { Toaster } from 'react-hot-toast';
+import ReactPaginate from 'react-paginate';
 
-function App() {
-  const [count, setCount] = useState(0);
+//! --------------------------------------
 
+//! 🔹 App
+export default function App() {
+  //! 🔹 States
+  const [query, setQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  //! 🔹 Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const closeModal = () => setIsModalOpen(false);
+  const openModal = (movie: Movie) => {
+    setSelectedMovie(movie);
+    setIsModalOpen(true);
+  };
+
+  const { data, isLoading, isError, isSuccess } = useMovies(query, currentPage);
+
+  useEffect(() => {
+    if (
+      isSuccess &&
+      data &&
+      Array.isArray(data.results) &&
+      data.results.length === 0
+    ) {
+      toast('No movies found for your request.');
+    }
+  }, [isSuccess, data]);
+
+  const handleSearchSubmit = (q: string) => {
+    if (!q.trim()) {
+      toast('Please enter a search term.');
+      return;
+    }
+    setQuery(q);
+    setCurrentPage(1);
+  };
+
+  //! 🔹 Render
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount(count => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <SearchBar onSubmit={handleSearchSubmit} />
+
+      {data?.total_pages && data.total_pages > 1 && (
+        <ReactPaginate
+          pageCount={data.total_pages}
+          pageRangeDisplayed={5}
+          marginPagesDisplayed={1}
+          onPageChange={({ selected }) => setCurrentPage(selected + 1)}
+          forcePage={currentPage - 1}
+          containerClassName={css.pagination}
+          activeClassName={css.active}
+          nextLabel="→"
+          previousLabel="←"
+        />
+      )}
+
+      {isLoading && <Loader />}
+      {isError && (
+        <ErrorMessage message="Something went wrong. Please try again." />
+      )}
+
+      {data && Array.isArray(data.results) && data.results.length > 0 && (
+        <MovieGrid movies={data.results} onSelect={openModal} />
+      )}
+
+      {data &&
+        Array.isArray(data.results) &&
+        data.results.length === 0 &&
+        !isLoading &&
+        !isError}
+
+      {isModalOpen && selectedMovie && (
+        <MovieModal onClose={closeModal} movie={selectedMovie} />
+      )}
+
+      <Toaster />
     </>
   );
 }
-
-export default App;
