@@ -1,6 +1,12 @@
 import axios from 'axios';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-import type { MoviesResponse } from '../types/movie';
+import type { Movie } from '../types/movie';
+
+export interface MoviesResponse {
+  page: number;
+  total_pages: number;
+  results: Movie[];
+}
 
 const api = axios.create({
   baseURL: 'https://api.themoviedb.org/3',
